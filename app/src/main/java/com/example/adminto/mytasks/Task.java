@@ -6,6 +6,7 @@ public class Task {
 
     String Time, Note , Date, Daily;
     int id;
+
     public Task(){
     }
 
@@ -14,6 +15,15 @@ public class Task {
         this.Note = Note;
         this.Date = Date;
         this.Daily = Daily;
+        this.id = id;
+    }
+    public Task(String Time, String Note , String Date, String Daily){
+        this.Time = Time;
+        this.Note = Note;
+        this.Date = Date;
+        this.Daily = Daily;
+    }
+    public Task(int id){
         this.id = id;
     }
 

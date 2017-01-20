@@ -2,12 +2,17 @@ package com.example.adminto.mytasks;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.provider.ContactsContract;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.format.DateUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -22,21 +27,30 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.BlockingDeque;
 
 public class Tasks extends AppCompatActivity {
     TextView CurrentDate; // поле для сохранения выбранной даты
     Calendar dateAndTime=Calendar.getInstance(); // календарь
     Button Button4;
     ListView Task ;
-    List<String> list = new ArrayList<>();
+    ArrayList<String> list = new ArrayList<>();
     ArrayAdapter<String> adapter;
     EditText input;
     CheckBox checkBox;
+
+    // db variable {
+    DataBase DBHelper;
+
+    ContentValues contentValues;
+
+    // }
+
     @Override
-    public void onCreate(Bundle savedInstance) {
+    public void onCreate(Bundle savedInstance ) {
         super.onCreate(savedInstance);
         setContentView(R.layout.activity_tasks);
-        DataBase db = new DataBase(this);
+
         // data/time choose {
         CurrentDate =(TextView)findViewById(R.id.CurrentDate);
         setInitialDate();
@@ -48,14 +62,67 @@ public class Tasks extends AppCompatActivity {
         Task.setAdapter(adapter);
 
 
+
+        // Delete Task {
         Task.setLongClickable(true);
         Task.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             public boolean onItemLongClick(AdapterView<?> parent, View v, int position, long id) {
                 deleteNote(position);
                 return true;
             }});
+        // }
+        // DB {
+        DBHelper = new DataBase(this);
+        // }
+        SQLiteDatabase db = DBHelper.getWritableDatabase();
+        for(int i = 0; i < DBHelper.getAllTasks().size();i++)
+        {
+            list.add(DBHelper.getAllTasks().get(i).getTime() + "\n" + DBHelper.getAllTasks().get(i).getNote() + "\n" + DBHelper.getAllTasks().get(i).getDaily());
+        }
     }
 
+    /*
+    // load data from DB {
+    public void getDataFromBd(View v)
+    {
+        SQLiteDatabase DB = DBHelper.getReadableDatabase();
+        Cursor cursor = DB.rawQuery("SELECT * FROM Tasks",null);
+        if(true)
+        {
+            int idIndex = cursor.getColumnIndex(DataBase.KEY_ID);
+            int taskIndex =  cursor.getColumnIndex(DataBase.KEY_TASK);
+            int dailyIndex = cursor.getColumnIndex(DataBase.KEY_DAILY);
+            int timeIndex = cursor.getColumnIndex(DataBase.KEY_TIME);
+            do
+            {
+                //list.add(cursor.getInt(idIndex) + "\n" + cursor.getString(taskIndex) + "\n" + cursor.getString(dailyIndex) + "\n" + cursor.getString(timeIndex));
+               // Log.d("mLog" , cursor.getString(1)); // + "\n" + cursor.getString(taskIndex) + "\n" + cursor.getString(dailyIndex) + "\n" + cursor.getString(timeIndex));
+                Log.d("mLog", "Cant get data");
+            }
+            while(cursor.moveToNext());
+        }
+        else {Log.d("mLog", "0 rowe");}
+        cursor.close();
+        adapter.notifyDataSetChanged();
+        DB.close();
+    }
+    public void setDataToBd(String everyday, String input, String CurrentDate, String Time)
+    {
+        contentValues = new ContentValues();
+        SQLiteDatabase DB = DBHelper.getWritableDatabase();
+        contentValues.put(DataBase.KEY_DAILY, "blabla");
+        contentValues.put(DataBase.KEY_TASK, "blabla");
+        contentValues.put(DataBase.KEY_DATE, "blabla");
+        contentValues.put(DataBase.KEY_TIME, "blabla");
+        Log.d("mLog", "Cant or can set data");
+        DB.insert(DataBase.TABLE_TASKS,null,contentValues);
+        DB.close();
+    }
+
+    //}
+     */
+
+    // delete plans in window{
     public void deleteNote(final int position)
     {
         AlertDialog.Builder build = new AlertDialog.Builder(Tasks.this);
@@ -66,7 +133,10 @@ public class Tasks extends AppCompatActivity {
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.cancel();
+                               // Task tt = new Task(DBHelper.getAllTasks().get(position).getID());
+                              //  DBHelper.deleteTask(tt);
                                 list.remove(position);
+                                Log.d("Logm", "" + position + "\n" + DBHelper.getAllTasks().get(position).getID());
                                 adapter.notifyDataSetChanged();
                             }
                         })
@@ -85,12 +155,17 @@ public class Tasks extends AppCompatActivity {
     public void onClick(final View v) {
         AlertDialog.Builder builder = new AlertDialog.Builder(Tasks.this);
         input = new EditText(this);
-
         builder.setView(input);
+        if(!list.isEmpty())
+        {
+
+            String t = DBHelper.getAllTasks().get(0).getID() + "\n" + DBHelper.getAllTasks().get(0).getNote() + "\n" + DBHelper.getAllTasks().get(0).getDaily();
+            Log.d("Logm", t );
+        }
         builder.setTitle("Введите описание плана")
                 .setCancelable(false)
 
-                .setNegativeButton("Указать время",
+                .setNegativeButton("Далее",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.cancel();
@@ -130,7 +205,10 @@ public class Tasks extends AppCompatActivity {
         AlertDialog a = build.create();
         a.show();
     }
-    // }
+    // } }
+
+
+
 
     //Create date choose dialog {
     public void setDate(View v) {
@@ -169,18 +247,41 @@ public class Tasks extends AppCompatActivity {
                 dateAndTime.get(Calendar.MINUTE), true)
                 .show();
 
+
     }
         private void setInitialTime() {
-            list.add(0,DateUtils.formatDateTime(this,
+
+
+
+            list.add(list.size(),DateUtils.formatDateTime(this,
                 dateAndTime.getTimeInMillis(),
                 DateUtils.FORMAT_ABBREV_ALL | DateUtils.FORMAT_ABBREV_ALL
                         | DateUtils.FORMAT_SHOW_TIME) + "\n" + input.getText().toString() + "\n" + everyday);
+
+            Task task = new Task(DateUtils.formatDateTime(this,
+                    dateAndTime.getTimeInMillis(),
+                    DateUtils.FORMAT_ABBREV_ALL | DateUtils.FORMAT_ABBREV_ALL
+                            | DateUtils.FORMAT_SHOW_TIME),input.getText().toString(), CurrentDate.getText().toString(),everyday);
+
+            DBHelper.insertTask(task);
+
+
+
+/*
+            setDataToBd(everyday, input.getText().toString(), CurrentDate.getText().toString(), DateUtils.formatDateTime(this,
+                    dateAndTime.getTimeInMillis(),
+                    DateUtils.FORMAT_ABBREV_ALL | DateUtils.FORMAT_ABBREV_ALL
+                            | DateUtils.FORMAT_SHOW_TIME));
+    */
 
             adapter.notifyDataSetChanged();
             Context context = getApplicationContext();
             int duration = Toast.LENGTH_SHORT;
             Toast toast = Toast.makeText(context, "Запись была добавлена", duration);
             toast.show();
+
+
+
     }
     TimePickerDialog.OnTimeSetListener t=new TimePickerDialog.OnTimeSetListener() {
         public void onTimeSet(TimePicker view, int hourOfDay, int minute) {

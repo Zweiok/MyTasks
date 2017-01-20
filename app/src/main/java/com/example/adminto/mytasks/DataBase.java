@@ -5,21 +5,20 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-
 import java.util.ArrayList;
 import java.util.List;
 
 
-
-public class DataBase extends SQLiteOpenHelper implements IDatabaseHandler{
-    private static final int DATABASE_VERSION = 1;
-    private static final String DATABASE_NAME = "TaskManager";
-    private static final String TABLE_TASKS = "Tasks";
-    private static final String KEY_TIME = "Time";
-    private static final String KEY_DATE = "Date";
-    private static final String KEY_TASK = "Task";
-    private static final String KEY_DAILY = "Daily";
-    private static final String KEY_ID = "ID";
+public class DataBase extends SQLiteOpenHelper {
+    public static final int DATABASE_VERSION = 1;
+    public static final String DATABASE_NAME = "my_db";
+    public static final String TABLE_TASKS = "Tasks";
+    public static final String KEY_TIME = "Time";
+    public static final String KEY_DATE = "Date";
+    public static final String KEY_TASK = "Task";
+    public static final String KEY_DAILY = "Daily";
+    public static final String KEY_ID = "ID";
+    ContentValues contentValues;
 
     public DataBase(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -27,30 +26,37 @@ public class DataBase extends SQLiteOpenHelper implements IDatabaseHandler{
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_TASKS + "("
-                + KEY_ID + " INTEGER PRIMARY KEY,"
-                + KEY_TIME + " TEXT," + KEY_DATE + " TEXT,"
-                + KEY_TASK + " TEXT," + KEY_DAILY + "BOOLEAN" + ")";
-        db.execSQL(CREATE_CONTACTS_TABLE);
+        db.execSQL("create table " + TABLE_TASKS + "("
+                + KEY_ID + " integer primary key,"
+                + KEY_TIME + " text," + KEY_DATE + " text,"
+                + KEY_TASK + " text," + KEY_DAILY + " text" + ")");
+
     }
 
     @Override
-    public void addTask(Task _task) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(KEY_TIME, _task.getTime());
-        values.put(KEY_DATE, _task.getDate());
-        values.put(KEY_TASK, _task.getNote());
-        values.put(KEY_DAILY, _task.getDaily());
-        values.put(KEY_ID, _task.getID());
-
-        db.insert(TABLE_TASKS, null, values);
-        db.close();
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("drop table if exists " + TABLE_TASKS);
+        onCreate(db);
     }
 
-    @Override
-    public List<Task> getCurrDateTasks() {
-        List<Task> TaskList = new ArrayList<>();
+    SQLiteDatabase DB;
+    Task t;
+    ArrayList<Task> tasks;
+    Cursor cursor;
+
+    public void insertTask(Task task) {
+        contentValues = new ContentValues();
+        DB = this.getWritableDatabase();
+        contentValues.put(KEY_DAILY, task.getDaily());
+        contentValues.put(KEY_TASK, task.getNote());
+        contentValues.put(KEY_TIME, task.getTime());
+        contentValues.put(KEY_DATE, task.getDate());
+        DB.insert(DataBase.TABLE_TASKS, null, contentValues);
+        DB.close();
+
+    }
+    public List<Task> getAllTasks() {
+        List<Task> contactList = new ArrayList<Task>();
         String selectQuery = "SELECT  * FROM " + TABLE_TASKS;
 
         SQLiteDatabase db = this.getWritableDatabase();
@@ -58,25 +64,28 @@ public class DataBase extends SQLiteOpenHelper implements IDatabaseHandler{
 
         if (cursor.moveToFirst()) {
             do {
-                Task _task = new Task();
-                _task.setID(Integer.parseInt(cursor.getString(0)));
-                _task.setTime(cursor.getString(1));
-                _task.setNote(cursor.getString(2));
-                _task.setDaily(cursor.getString(3));
-                TaskList.add(_task);
+                Task t = new Task();
+                t.setNote(cursor.getString(cursor.getColumnIndex(DataBase.KEY_TASK)));
+                t.setDaily(cursor.getString(cursor.getColumnIndex(DataBase.KEY_DAILY)));
+                t.setTime(cursor.getString(cursor.getColumnIndex(DataBase.KEY_TIME)));
+                t.setID(cursor.getInt(cursor.getColumnIndex(DataBase.KEY_TIME)));
+                t.setDate(cursor.getString(cursor.getColumnIndex(DataBase.KEY_TIME)));
+                contactList.add(t);
             } while (cursor.moveToNext());
+            cursor.moveToFirst();
         }
-        return TaskList;
-    }
 
-    @Override
-    public void deleteTask(Task _task) {
+        return contactList;
+
+    }
+    public void deleteTask(Task t) {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(TABLE_TASKS, KEY_ID + " = ?", new String[] { String.valueOf(_task.getID()) });
+        db.delete(TABLE_TASKS, KEY_ID + " = ?", new String[] { String.valueOf(t.getID()) });
+        String selectQuery = "DELETE FROM " + TABLE_TASKS + " WHERE " + KEY_ID + " = " + t.getID();
+        db.rawQuery(selectQuery,null);
         db.close();
     }
 
-    @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-    }
 }
+
+
