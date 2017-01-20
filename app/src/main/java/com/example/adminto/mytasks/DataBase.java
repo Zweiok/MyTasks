@@ -17,7 +17,7 @@ public class DataBase extends SQLiteOpenHelper {
     public static final String KEY_DATE = "Date";
     public static final String KEY_TASK = "Task";
     public static final String KEY_DAILY = "Daily";
-    public static final String KEY_ID = "ID";
+    public static final String KEY_ID = "_id";
     ContentValues contentValues;
 
     public DataBase(Context context) {
@@ -26,8 +26,8 @@ public class DataBase extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("create table " + TABLE_TASKS + "("
-                + KEY_ID + " integer primary key,"
+        db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_TASKS + "("
+                + KEY_ID + " INTEGER PRIMARY KEY autoincrement,"
                 + KEY_TIME + " text," + KEY_DATE + " text,"
                 + KEY_TASK + " text," + KEY_DAILY + " text" + ")");
 
@@ -47,6 +47,7 @@ public class DataBase extends SQLiteOpenHelper {
     public void insertTask(Task task) {
         contentValues = new ContentValues();
         DB = this.getWritableDatabase();
+      //  contentValues.put(KEY_ID, task.getID());
         contentValues.put(KEY_DAILY, task.getDaily());
         contentValues.put(KEY_TASK, task.getNote());
         contentValues.put(KEY_TIME, task.getTime());
@@ -65,11 +66,11 @@ public class DataBase extends SQLiteOpenHelper {
         if (cursor.moveToFirst()) {
             do {
                 Task t = new Task();
+                t.setTime(cursor.getString(cursor.getColumnIndex(DataBase.KEY_TIME)));
                 t.setNote(cursor.getString(cursor.getColumnIndex(DataBase.KEY_TASK)));
                 t.setDaily(cursor.getString(cursor.getColumnIndex(DataBase.KEY_DAILY)));
-                t.setTime(cursor.getString(cursor.getColumnIndex(DataBase.KEY_TIME)));
-                t.setID(cursor.getInt(cursor.getColumnIndex(DataBase.KEY_TIME)));
-                t.setDate(cursor.getString(cursor.getColumnIndex(DataBase.KEY_TIME)));
+                t.setDate(cursor.getString(cursor.getColumnIndex(DataBase.KEY_DATE)));
+                t.setID(cursor.getInt(cursor.getColumnIndex(DataBase.KEY_ID)));
                 contactList.add(t);
             } while (cursor.moveToNext());
             cursor.moveToFirst();

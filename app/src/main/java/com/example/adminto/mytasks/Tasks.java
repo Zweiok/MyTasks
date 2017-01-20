@@ -78,7 +78,9 @@ public class Tasks extends AppCompatActivity {
         for(int i = 0; i < DBHelper.getAllTasks().size();i++)
         {
             list.add(DBHelper.getAllTasks().get(i).getTime() + "\n" + DBHelper.getAllTasks().get(i).getNote() + "\n" + DBHelper.getAllTasks().get(i).getDaily());
+            Log.d("Logm", "" + i + "\n" + DBHelper.getAllTasks().get(i).getID());
         }
+        //deleteDatabase(DataBase.DATABASE_NAME);
     }
 
     /*
@@ -133,10 +135,10 @@ public class Tasks extends AppCompatActivity {
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.cancel();
-                               // Task tt = new Task(DBHelper.getAllTasks().get(position).getID());
-                              //  DBHelper.deleteTask(tt);
+                                Task tt = new Task(DBHelper.getAllTasks().get(position).getID());
+                                DBHelper.deleteTask(tt);
                                 list.remove(position);
-                                Log.d("Logm", "" + position + "\n" + DBHelper.getAllTasks().get(position).getID());
+                              //  Log.d("Logm", "" + position + "\n" + DBHelper.getAllTasks().get(position).getID());
                                 adapter.notifyDataSetChanged();
                             }
                         })
@@ -264,8 +266,6 @@ public class Tasks extends AppCompatActivity {
                             | DateUtils.FORMAT_SHOW_TIME),input.getText().toString(), CurrentDate.getText().toString(),everyday);
 
             DBHelper.insertTask(task);
-
-
 
 /*
             setDataToBd(everyday, input.getText().toString(), CurrentDate.getText().toString(), DateUtils.formatDateTime(this,

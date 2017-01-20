@@ -10,13 +10,6 @@ public class Task {
     public Task(){
     }
 
-    public Task(int id, String Time, String Note , String Date, String Daily){
-        this.Time = Time;
-        this.Note = Note;
-        this.Date = Date;
-        this.Daily = Daily;
-        this.id = id;
-    }
     public Task(String Time, String Note , String Date, String Daily){
         this.Time = Time;
         this.Note = Note;
